@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Ajax.Utilities;
+using NUglify;
+using NUglify.Css;
+using NUglify.JavaScript;
 
 namespace JsBit
 {
@@ -101,8 +103,8 @@ namespace JsBit
             if (!Directory.Exists(packageRootPath))
                 Directory.CreateDirectory(packageRootPath);
 
-            String debugContent = null;
-            String minifiedContent = null;
+            string debugContent = null;
+            UglifyResult minifiedContent;
 
             using (var combineWriter = new StringWriter())
             {
@@ -155,22 +157,20 @@ namespace JsBit
 
             File.WriteAllText(packageDebugPath, debugContent, options.OutputEncoding);
 
-            var minifier = new Minifier();
-
             if (packageExtension.ToLowerInvariant() == ".js")
             {
                 Console.WriteLine("- Executing JavaScript minification.");
-                minifiedContent = minifier.MinifyJavaScript(debugContent, options.CodeSettings);
+                minifiedContent = Uglify.Js(debugContent, options.CodeSettings);
             }
             else
             {
                 Console.WriteLine("- Executing CSS minification.");
-                minifiedContent = minifier.MinifyStyleSheet(debugContent, options.CssSettings);
+                minifiedContent = Uglify.Css(debugContent, options.CssSettings);
             }
 
             Console.WriteLine("- Writing minified output to '{0}'.", packageMinifiedPath);
 
-            File.WriteAllText(packageMinifiedPath, minifiedContent, options.OutputEncoding);
+            File.WriteAllText(packageMinifiedPath, minifiedContent.Code, options.OutputEncoding);
         }
 
         private void WriteLicense(string license, TextWriter writer)
